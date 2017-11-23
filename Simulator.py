@@ -1,6 +1,6 @@
-import random
-from numpy import *
 
+from numpy import *
+import random
 
 def mmax(a, b):
     if a > b:
@@ -10,7 +10,7 @@ def mmax(a, b):
 
 
 class Network:
-    def __init__(self, num):
+    def __init__(self, num=40):
         # initialize an empty network of size num, while no nodes are connected.
         self.size = num
         self.info = (num * [0])[:]
@@ -51,6 +51,26 @@ class Network:
         else:
             return True
 
+    def generate(self, area=100, dis=30):
+        # In a square of area*area, if the distance between 2 nodes <= dis, then connect this 2 nodes.
+        while (1):
+            nodes = []
+            for i in range(self.size):
+                x = random.randrange(0, area)
+                y = random.randrange(0, area)
+                nodes.append([x,y])
+            for i in range(self.size):
+                for j in range(self.size):
+                    if i == j:
+                        continue
+                    else:
+                        distance = (nodes[i][0] - nodes[j][0])**2 + (nodes[i][1] - nodes[j][1])**2
+                        if distance <= dis**2:
+                            self.add_line(i,j)
+            if self.judge_connected():
+                return
+
+
     def add_line(self, i, j):
         # add a line between node i and node j.
         self.nodes[i][j] = 1
@@ -73,7 +93,7 @@ class Network:
                 self.nodes[i][j] = temp
                 self.nodes[j][i] = temp
 
-    def calculateAvg(self):
+    def calculate_avg(self):
         # calculate the average of the network.
         temp = self.info[:]
         for i in range(self.size):
@@ -92,12 +112,9 @@ class Network:
 
 
 def main():
-    graph = Network(5)
-    graph.set_data([12132, 2123123, 321415, 44, 5555])
-    graph.add_line(0, 1)
-    graph.add_line(1, 2)
-    graph.add_line(1, 3)
-    graph.add_line(0, 4)
+    graph = Network()
+   # graph.set_data([12132, 2123123, 321415, 44, 5555])
+    graph.generate()
     print(graph.judge_connected())
 
 
