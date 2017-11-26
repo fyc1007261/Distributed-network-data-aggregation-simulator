@@ -2,7 +2,7 @@ from network import *
 
 
 def main():
-    size = 10
+    size = 100
     net = Network(size)
     data = []
     for i in range(size):

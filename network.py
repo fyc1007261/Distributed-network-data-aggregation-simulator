@@ -13,7 +13,7 @@ class Network:
     def __init__(self, num=40):
         # initialize an empty network of size num, while no nodes are connected.
         self.size = num
-        self.value = (num * [0])[:]
+        self.value = mat((num * [0])[:])
         self.topology = []
         for i in range(num):
             temp = []
@@ -21,6 +21,7 @@ class Network:
                 temp.append(0)
             self.topology.append(temp)
         self.generate()
+        self.weight_matrix = mat(self.calculate_weight_matrix())
 
     def neighbors_of(self, i):
         # return a set that contains neighbors of node i.
@@ -78,7 +79,7 @@ class Network:
 
     def set_data(self, data):
         # set all data while "data" is a list of n data.(n is the size of the network)
-        self.value = data[:]
+        self.value = mat(data[:])
 
     def rd(self):
         # generate a random topology of the network.
@@ -93,21 +94,39 @@ class Network:
                 self.topology[i][j] = temp
                 self.topology[j][i] = temp
 
+    def calculate_weight_matrix(self):
+        result = []
+        for i in range(self.size):
+            temp = []
+            for j in range(self.size):
+                temp.append(0)
+            result.append(temp)
+        for i in range(self.size):
+            num = 0
+            for j in range(self.size):
+                if self.topology[i][j] == 1:
+                    result[i][j] = (1 / (1 + mmax(self.num_of_neighbors(i), self.num_of_neighbors(j))))
+                    num += result[i][j]
+            result[i][i] = 1 - num
+        return result
+
+
     def calculate_avg(self, max_iter=-1):
         # calculate the average of the network.
         if max_iter == -1:
-            max_iter = self.size**2
+            max_iter = self.size
         temp = self.value[:]
         new = temp[:] # store the value, because values should be update simultaneously.
         for iter in range(max_iter):
-            print(temp)
-            for i in range(self.size):
-                count = 0
-                num = 0
-                for j in range(self.size):
-                    if self.topology[i][j] == 1:
-                        count += temp[j] * (1 / (1 + mmax(self.num_of_neighbors(i), self.num_of_neighbors(j))))
-                        num += 1/(1+mmax(self.num_of_neighbors(i), self.num_of_neighbors(j)))
-                new[i] = (count + temp[i] * (1 - num))
-            temp[:] = new[:]
-        self.value = temp[:]
+        #     for i in range(self.size):
+        #         count = 0
+        #         num = 0
+        #         for j in range(self.size):
+        #             if self.topology[i][j] == 1:
+        #                 count += temp[j] * (1 / (1 + mmax(self.num_of_neighbors(i), self.num_of_neighbors(j))))
+        #                 num += 1/(1+mmax(self.num_of_neighbors(i), self.num_of_neighbors(j)))
+        #         new[i] = (count + temp[i] * (1 - num))
+        #     temp[:] = new[:]
+        # self.value = temp[:]
+            self.value = self.value * self.weight_matrix
+
