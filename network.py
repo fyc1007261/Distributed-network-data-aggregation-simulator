@@ -183,7 +183,11 @@ class Network:
                         temp_id[node] = id_value[nei]
             id_value = copy.deepcopy(temp_id)
             values = copy.deepcopy(temp)
-        print(values)
-        print(id_value)
+        self.value = values
+        # delete the data in max(min) nodes.
+        for i in range(self.size):
+            if id_value[i] == i:
+                flags[i] = 0
+        return flags
 
 
