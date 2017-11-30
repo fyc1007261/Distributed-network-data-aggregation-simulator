@@ -240,9 +240,9 @@ class Network:
             max_values, min_values, flags = self.m_consensus(flags)
             max_value = max_values[0, 0]
             min_value = min_values[0, 0]
-            max_pos = (max_value - min_all) // (v_range // sections + 1)
-            min_pos = (min_value - min_all) // (v_range // sections + 1)
-            if max_pos == sections:
+            max_pos = int((max_value - min_all) / (v_range / sections))
+            min_pos = int((min_value - min_all) / (v_range / sections))
+            if max_pos >= sections:
                 max_pos = -1
             pdf[max_pos] += 1
             pdf[min_pos] += 1
