@@ -143,51 +143,108 @@ class Network:
         for iter in range(max_iter):
             self.value = self.value * self.weight_matrix
 
-    def m_consensus(self, flags, mode="max", iter=0):
-        values = self.value
-        # error report.
-        if mode != "max" and mode != "min":
-            print("Invalid parameters!")
-            return
-        multi = 1
-        if mode == "min":
-            multi = -1
+    def m_consensus(self, flags, iter=0):
+        max_values = copy.deepcopy(self.value)
+        min_values = copy.deepcopy(self.value)
         # set number of iterations by default.
         if iter == 0:
             iter = self.size-1
         # initialize IDs in nodes.
-        id_value = []
+        max_id_value = []
+        min_id_value = []
         for i in range(self.size):
-            id_value.append(i)
+            max_id_value.append(i)
+            min_id_value.append(i)
         # start the iterations
         for i in range(iter):
-            temp = copy.deepcopy(values)
-            temp_id = copy.deepcopy(id_value)
+            temp_max = copy.deepcopy(max_values)
+            temp_min = copy.deepcopy(min_values)
+            temp_max_id = copy.deepcopy(max_id_value)
+            temp_min_id = copy.deepcopy(min_id_value)
+            temp_flags = copy.deepcopy(flags)
             for node in range(self.size):
                 neighbors = self.neighbors_of(node)
                 for nei in neighbors:
-                    if flags[nei] == 0:  # no data in this neighbor.
-                        continue
-                    if flags[node] == 0:  # info in node has been deleted.
-                        if flags[nei] == 1:
-                            temp[0, node] = values[0,nei]
-                            flags[node] = 1
-                            temp_id[node] = id_value[nei]
+                    # max consensus
+                    if flags[nei][1] == 0:  # no max in this neighbor.
+                        pass
+                    elif temp_flags[node][1] == 0:  # info in node has been deleted.
+                        if flags[nei][1] == 1:
+                            temp_max[0, node] = max_values[0, nei]
+                            temp_flags[node][1] = 1
+                            temp_max_id[node] = max_id_value[nei]
                         else:
                             continue
-                    elif values[0, nei] == temp[0, node]:  # values equal, compare ID
-                        if multi*id_value[nei] > multi*temp_id[node]:
-                            temp_id[node] = id_value[nei]
-                    elif multi*values[0, nei] > multi*temp[0, node]:
-                        temp[0, node] = values[0, nei]
-                        temp_id[node] = id_value[nei]
-            id_value = copy.deepcopy(temp_id)
-            values = copy.deepcopy(temp)
-        self.value = values
+                    elif max_values[0, nei] == temp_max[0, node]:  # values equal, compare ID
+                        if max_id_value[nei] > temp_max_id[node]:
+                            temp_max_id[node] = max_id_value[nei]
+                    elif max_values[0, nei] > temp_max[0, node]:
+                        temp_max[0, node] = max_values[0, nei]
+                        temp_max_id[node] = max_id_value[nei]
+                    # min consensus
+                    if flags[nei][0] == 0:  # no max in this neighbor.
+                        pass
+                    elif temp_flags[node][0] == 0:  # info in node has been deleted.
+                        if flags[nei][0] == 1:
+                            temp_min[0, node] = min_values[0, nei]
+                            temp_flags[node][0] = 1
+                            temp_min_id[node] = min_id_value[nei]
+                        else:
+                            continue
+                    elif min_values[0, nei] == temp_min[0, node]:  # values equal, compare ID
+                        if min_id_value[nei] < temp_min_id[node]:
+                            temp_min_id[node] = min_id_value[nei]
+                    elif min_values[0, nei] < temp_min[0, node]:
+                        temp_min[0, node] = min_values[0, nei]
+                        temp_min_id[node] = min_id_value[nei]
+            max_id_value = copy.deepcopy(temp_max_id)
+            min_id_value = copy.deepcopy(temp_min_id)
+            max_values = copy.deepcopy(temp_max)
+            min_values = copy.deepcopy(temp_min)
         # delete the data in max(min) nodes.
         for i in range(self.size):
-            if id_value[i] == i:
-                flags[i] = 0
-        return flags
+            if min_id_value[i] == i:
+                flags[i][0] = 0
+            if max_id_value[i] == i:
+                flags[i][1] = 0
+        return max_values, min_values, flags
 
+    def check_flags(self, flags):
+        # check whether data in all nodes are used.
+        for i in range(self.size):
+            if flags[i][0] == 1 and flags[i][1] == 1:
+                return False
+        else:
+            return True
+
+    def pdf_aggregation(self, sections=10, max_iter=-1):
+        # initialize max_iter
+        if max_iter == -1:
+            max_iter = self.size-1
+        # initialize pdf in each nodes.
+        pdf = ([0] * sections)[:]
+        # initialize flags
+        flags = []
+        for i in range(self.size):
+            flags.append([1,1])
+        # start aggregating
+        # do the 1st iteration to gain the max and min of the network in order to divide the sections.
+        max_values, min_values, flags = self.m_consensus(flags)
+        max_value = max_values[0,0]
+        min_value = min_values[0,0]
+        min_all = min_value
+        pdf[0] += 1
+        pdf[-1] += 1
+        v_range = max_value - min_value
+        for i in range(self.size//2 - 1):
+            max_values, min_values, flags = self.m_consensus(flags)
+            max_value = max_values[0, 0]
+            min_value = min_values[0, 0]
+            max_pos = (max_value - min_all) // (v_range // sections + 1)
+            min_pos = (min_value - min_all) // (v_range // sections + 1)
+            if max_pos == sections:
+                max_pos = -1
+            pdf[max_pos] += 1
+            pdf[min_pos] += 1
+        return pdf
 
