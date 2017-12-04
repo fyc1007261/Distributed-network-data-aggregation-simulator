@@ -103,7 +103,7 @@ class Network:
 
     def set_data(self, data):
         # set all data while "data" is a list of n data.(n is the size of the network)
-        self.value = mat(data[:])
+        self.value = (mat(data[:]))
 
     def rd(self):
         # generate a random topology of the network.
@@ -134,14 +134,14 @@ class Network:
             result[i][i] = 1 - num
         return result
 
-    def calculate_avg(self, max_iter=-1):
+    def calculate_avg(self, value_m, max_iter=-1):
         # calculate the average of the network.
+        value_m = value_m.T
         if max_iter == -1:
             max_iter = self.size
-        temp = self.value[:]
-        new = temp[:]  # store the value, because values should be update simultaneously.
         for iter in range(max_iter):
-            self.value = self.value * self.weight_matrix
+            value_m = (self.weight_matrix * value_m)
+        return value_m.T
 
     def m_consensus(self, flags, iter=0):
         max_values = copy.deepcopy(self.value)
@@ -246,5 +246,39 @@ class Network:
                 max_pos = -1
             pdf[max_pos] += 1
             pdf[min_pos] += 1
+        return multiply(pdf, 1/self.size)
+
+    def pdf_aggregation_without_id(self, sections=10, max_iter=-1):
+        # initialize max_iter
+        if max_iter == -1:
+            max_iter = self.size
+        # initialize flags
+        flags = []
+        for i in range(self.size):
+            flags.append([1, 1])
+        # do the 1st iteration to gain the max and min of the network in order to divide the sections.
+        max_values, min_values, flags = self.m_consensus(flags)
+        max_value = max_values[0, 0]
+        min_value = min_values[0, 0]
+        v_range = max_value - min_value
+        # initialize pdf in each nodes.
+        pdf = []
+        for i in range(self.size):
+            temp = []
+            position = int((self.value[0, i] - min_value) / (v_range / sections))
+            if position >= sections:
+                position = -1
+            for j in range(sections):
+                temp.append(0)
+            temp[position] = 1
+            pdf.append(temp)
+
+         #start aggregation
+        pdf = (mat(pdf)).T
+        for iter in range(max_iter):
+            pdf = self.calculate_avg(pdf)
         return pdf
+
+
+
 
