@@ -226,12 +226,12 @@ class Network:
         # initialize flags
         flags = []
         for i in range(self.size):
-            flags.append([1,1])
+            flags.append([1, 1])
         # start aggregating
         # do the 1st iteration to gain the max and min of the network in order to divide the sections.
         max_values, min_values, flags = self.m_consensus(flags)
-        max_value = max_values[0,0]
-        min_value = min_values[0,0]
+        max_value = max_values[0, 0]
+        min_value = min_values[0, 0]
         min_all = min_value
         pdf[0] += 1
         pdf[-1] += 1
