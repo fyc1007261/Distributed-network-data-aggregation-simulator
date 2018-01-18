@@ -170,7 +170,7 @@ class Network:
         min_values = copy.deepcopy(self.value)
         # set number of iterations by default.
         if iter == 0:
-            iter = self.size-1
+            iter = self.size//2 -1
         # initialize IDs in nodes.
         max_id_value = []
         min_id_value = []
@@ -258,7 +258,8 @@ class Network:
         pdf[0] += 1
         pdf[-1] += 1
         v_range = max_value - min_value
-        for i in range(self.size//2 - 1):
+        ran = self.size//2 - 1
+        for i in range(ran):
             max_values, min_values, flags = self.m_consensus(flags)
             max_value = max_values[0, 0]
             min_value = min_values[0, 0]
