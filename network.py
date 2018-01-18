@@ -26,19 +26,21 @@ def find_extreme(my_set, mode="max"):
 
 
 class Network:
-    def __init__(self, num=40):
+    def __init__(self, new=True, num=40):
         # initialize an empty network of size num, while no nodes are connected.
         self.size = num  # size of the network
         self.value = mat((num * [0])[:])  # initial value held by nodes
         self.topology = []
         self.neighbors = [] # a list of sets. Neighbors of each node are in the sets.
         # generate the topology
+        # generate an empty matrix
         for i in range(num):
             temp = []
             for j in range(num):
                 temp.append(0)
             self.topology.append(temp)
-        self.generate()
+        if new:
+            self.generate()
         self.weight_matrix = mat(self.calculate_weight_matrix())
 
     def find_neighbors(self):
@@ -96,6 +98,26 @@ class Network:
             if self.judge_connected():
                 break
 
+    def save_topology(self):
+        file_name = "topology.txt"
+        f = open(file_name, 'w')
+        size = len(self.topology)
+        for i in range(size):
+            f.write(str(self.topology[i])+'\n')
+        f.close()
+
+    def load_topology(self):
+        file_name = "topology.txt"
+        f = open(file_name, 'r')
+        i = 0
+        while 1:
+            s = f.readline()
+            if s == "":
+                break
+            self.topology[i] = eval(s)
+            i += 1
+        f.close()
+
     def add_line(self, i, j):
         # add a line between node i and node j.
         self.topology[i][j] = 1
@@ -148,7 +170,7 @@ class Network:
         min_values = copy.deepcopy(self.value)
         # set number of iterations by default.
         if iter == 0:
-            iter = self.size-1
+            iter = self.size//2 -1
         # initialize IDs in nodes.
         max_id_value = []
         min_id_value = []
@@ -236,7 +258,8 @@ class Network:
         pdf[0] += 1
         pdf[-1] += 1
         v_range = max_value - min_value
-        for i in range(self.size//2 - 1):
+        ran = self.size//2 - 1
+        for i in range(ran):
             max_values, min_values, flags = self.m_consensus(flags)
             max_value = max_values[0, 0]
             min_value = min_values[0, 0]
