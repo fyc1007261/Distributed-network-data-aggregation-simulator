@@ -81,11 +81,15 @@ class Network:
         # In a square of area*area, if the distance between 2 nodes <= dis, then connect this 2 nodes.
         if new:
             while 1:
+                # Clear the topology
+                for i in range(self.size):
+                    for j in range(self.size):
+                        self.topology[i][j] = 0
                 nodes = []
                 for i in range(self.size):
                     x = random.randrange(0, area)
                     y = random.randrange(0, area)
-                    nodes.append([x, y])
+                    nodes.append((x, y))
                 for i in range(self.size):
                     for j in range(self.size):
                         if i == j:
@@ -96,6 +100,12 @@ class Network:
                                 self.add_line(i, j)
                 self.find_neighbors()
                 if self.judge_connected():
+                    # plot
+                    for i in range(self.size):
+                        for j in range(self.size):
+                            if self.topology[i][j]==1:
+                                plt.plot([nodes[i][0],nodes[j][0]], [nodes[i][1],nodes[j][1]])
+                    plt.show()
                     break
         else:
             # load topology from file.
@@ -148,9 +158,6 @@ class Network:
         for i in range(self.size):
             my_list.append(self.diameter_from(i))
         return find_extreme(my_list, "max")
-
-
-
 
     def add_line(self, i, j):
         # add a line between node i and node j.

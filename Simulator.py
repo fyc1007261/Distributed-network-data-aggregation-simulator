@@ -25,7 +25,7 @@ def main():
     plt.show()
 
 def test_diameter():
-    net = Network(new_top=True, num=100, s_area=100, s_dis=30)
+    net = Network(new_top=True, num=100 , s_area=100, s_dis=15)
     net.save_topology()
     net.find_neighbors()
     b=net.diameter()
