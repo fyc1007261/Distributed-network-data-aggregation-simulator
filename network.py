@@ -125,6 +125,33 @@ class Network:
             i += 1
         f.close()
 
+    def diameter_from(self, a):
+        # The diameter start from node a.
+        s_visited = set([a])
+        path = ([99999] * self.size)[:]
+        path[a] = 0
+        q = [a]
+        diameter = 0
+        while len(s_visited) < self.size:
+            popped = q.pop(0)
+            neighbors = self.neighbors_of(popped)
+            diameter += 1
+            for item in neighbors:
+                if not (item in s_visited):
+                    s_visited.add(item)
+                    q.append(item)
+                    path[item] = 1 + path[popped]
+        return find_extreme(path, "max")
+
+    def diameter(self):
+        my_list = []
+        for i in range(self.size):
+            my_list.append(self.diameter_from(i))
+        return find_extreme(my_list, "max")
+
+
+
+
     def add_line(self, i, j):
         # add a line between node i and node j.
         self.topology[i][j] = 1

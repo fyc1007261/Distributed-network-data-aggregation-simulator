@@ -24,5 +24,11 @@ def main():
     print(net2.generic_pdf_consensus(sections=20, sim=True).T[0])
     plt.show()
 
+def test_diameter():
+    net = Network(new_top=True, num=100, s_area=100, s_dis=30)
+    net.save_topology()
+    net.find_neighbors()
+    b=net.diameter()
+    print(b)
 
-main()
+test_diameter()
