@@ -40,7 +40,8 @@ class Network:
                 temp.append(0)
             self.topology.append(temp)
         if new:
-            self.generate()
+            self.generate(new=False)
+            print(self.topology)
         self.weight_matrix = mat(self.calculate_weight_matrix())
 
     def find_neighbors(self):
@@ -78,25 +79,35 @@ class Network:
         else:
             return True
 
-    def generate(self, area=100, dis=30):
+    def generate(self, area=100, dis=30, new=False):
         # In a square of area*area, if the distance between 2 nodes <= dis, then connect this 2 nodes.
-        while 1:
-            nodes = []
-            for i in range(self.size):
-                x = random.randrange(0, area)
-                y = random.randrange(0, area)
-                nodes.append([x, y])
-            for i in range(self.size):
-                for j in range(self.size):
-                    if i == j:
-                        continue
-                    else:
-                        distance = (nodes[i][0] - nodes[j][0])**2 + (nodes[i][1] - nodes[j][1])**2
-                        if distance <= dis**2:
-                            self.add_line(i, j)
+        if new:
+            while 1:
+                nodes = []
+                for i in range(self.size):
+                    x = random.randrange(0, area)
+                    y = random.randrange(0, area)
+                    nodes.append([x, y])
+                for i in range(self.size):
+                    for j in range(self.size):
+                        if i == j:
+                            continue
+                        else:
+                            distance = (nodes[i][0] - nodes[j][0])**2 + (nodes[i][1] - nodes[j][1])**2
+                            if distance <= dis**2:
+                                self.add_line(i, j)
+                self.find_neighbors()
+                if self.judge_connected():
+                    break
+        else:
+            # load topology from file.
+            file_name = "topology.txt"
+            f = open(file_name, "r")
+            size = len(self.topology)
+            for i in range(size):
+                data = eval(f.readline())
+                self.topology[i] = data
             self.find_neighbors()
-            if self.judge_connected():
-                break
 
     def save_topology(self):
         file_name = "topology.txt"
@@ -125,7 +136,7 @@ class Network:
 
     def set_data(self, data):
         # set all data while "data" is a list of n data.(n is the size of the network)
-        self.value = (mat(data[:]))
+        self.value = mat(data[:])
 
     def rd(self):
         # generate a random topology of the network.
@@ -156,14 +167,12 @@ class Network:
             result[i][i] = 1 - num
         return result
 
-    def calculate_avg(self, value_m, max_iter=-1):
+    def calculate_avg(self, max_iter=-1):
         # calculate the average of the network.
-        value_m = value_m.T
         if max_iter == -1:
             max_iter = self.size
-        for iter in range(max_iter):
-            value_m = (self.weight_matrix * value_m)
-        return value_m.T
+        for i in range(max_iter):
+            self.value = self.value * self.weight_matrix
 
     def m_consensus(self, flags, iter=0):
         max_values = copy.deepcopy(self.value)
@@ -239,7 +248,7 @@ class Network:
         else:
             return True
 
-    def pdf_aggregation(self, sections=10, max_iter=-1):
+    def id_based_pdf_aggregation(self, sections=10, max_iter=-1):
         # initialize max_iter
         if max_iter == -1:
             max_iter = self.size-1
@@ -269,39 +278,40 @@ class Network:
                 max_pos = -1
             pdf[max_pos] += 1
             pdf[min_pos] += 1
-        return multiply(pdf, 1/self.size)
-
-    def pdf_aggregation_without_id(self, sections=10, max_iter=-1):
-        # initialize max_iter
-        if max_iter == -1:
-            max_iter = self.size
-        # initialize flags
-        flags = []
-        for i in range(self.size):
-            flags.append([1, 1])
-        # do the 1st iteration to gain the max and min of the network in order to divide the sections.
-        max_values, min_values, flags = self.m_consensus(flags)
-        max_value = max_values[0, 0]
-        min_value = min_values[0, 0]
-        v_range = max_value - min_value
-        # initialize pdf in each nodes.
-        pdf = []
-        for i in range(self.size):
-            temp = []
-            position = int((self.value[0, i] - min_value) / (v_range / sections))
-            if position >= sections:
-                position = -1
-            for j in range(sections):
-                temp.append(0)
-            temp[position] = 1
-            pdf.append(temp)
-
-         #start aggregation
-        pdf = (mat(pdf)).T
-        for iter in range(max_iter):
-            pdf = self.calculate_avg(pdf)
         return pdf
 
-
-
-
+    def generic_pdf_consensus(self, sections=10, max_iter=40, sim=False):
+        # initialize $\rho$
+        rho = []
+        global_max = find_extreme(self.value[0].tolist()[0], "max")
+        global_min = find_extreme(self.value[0].tolist()[0], "min")
+        v_range = global_max - global_min
+        for i in range(self.size):
+            pos = int((self.value[0, i] - global_min) / (v_range / sections))
+            if pos == sections:
+                pos = -1
+            rho_i = copy.deepcopy([0] * sections)
+            rho_i[pos] = 1
+            rho.append(rho_i)
+        rho = mat(rho)
+        rho = rho.T
+        # Store rho in each iteration
+        store = [rho]
+        # Start average consensus
+        for i in range(max_iter):
+            rho = rho * self.weight_matrix
+            if sim:
+                store.append(rho)
+        p_final = rho
+        p_final = p_final * sections / v_range
+        l_delta = []
+        for i in range(max_iter):
+            temp_p = store[i] * sections / v_range
+            delta = sum(abs(temp_p - p_final))
+            l_delta.append(delta)
+        axis_x = []
+        for i in range(max_iter):
+            axis_x.append(i)
+        plt.plot(axis_x, l_delta)
+        plt.show()
+        return p_final
