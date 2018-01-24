@@ -2,3 +2,5 @@
 *.pyc
 .idea/Distributed-network-data-aggregation-simulator.iml
 *.xml
+test.py
+test.txt
