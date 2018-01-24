@@ -26,7 +26,7 @@ def find_extreme(my_set, mode="max"):
 
 
 class Network:
-    def __init__(self, new=True, num=40):
+    def __init__(self, new_top=True, num=40, topo_file="topology.txt", s_area=100, s_dis=40):
         # initialize an empty network of size num, while no nodes are connected.
         self.size = num  # size of the network
         self.value = mat((num * [0])[:])  # initial value held by nodes
@@ -39,9 +39,7 @@ class Network:
             for j in range(num):
                 temp.append(0)
             self.topology.append(temp)
-        if new:
-            self.generate(new=False)
-            print(self.topology)
+        self.generate(new=new_top, file_name=topo_file, area=s_area, dis=s_dis)
         self.weight_matrix = mat(self.calculate_weight_matrix())
 
     def find_neighbors(self):
@@ -79,7 +77,7 @@ class Network:
         else:
             return True
 
-    def generate(self, area=100, dis=30, new=False):
+    def generate(self, area=100, dis=30, new=False, file_name="topology.txt"):
         # In a square of area*area, if the distance between 2 nodes <= dis, then connect this 2 nodes.
         if new:
             while 1:
@@ -101,7 +99,6 @@ class Network:
                     break
         else:
             # load topology from file.
-            file_name = "topology.txt"
             f = open(file_name, "r")
             size = len(self.topology)
             for i in range(size):
@@ -109,8 +106,7 @@ class Network:
                 self.topology[i] = data
             self.find_neighbors()
 
-    def save_topology(self):
-        file_name = "topology.txt"
+    def save_topology(self, file_name="topology.txt"):
         f = open(file_name, 'w')
         size = len(self.topology)
         for i in range(size):
@@ -280,7 +276,7 @@ class Network:
             pdf[min_pos] += 1
         return pdf
 
-    def generic_pdf_consensus(self, sections=10, max_iter=40, sim=False):
+    def generic_pdf_consensus(self, sections=10, max_iter=60, sim=False):
         # initialize $\rho$
         rho = []
         global_max = find_extreme(self.value[0].tolist()[0], "max")
@@ -305,13 +301,13 @@ class Network:
         p_final = rho
         p_final = p_final * sections / v_range
         l_delta = []
-        for i in range(max_iter):
-            temp_p = store[i] * sections / v_range
-            delta = sum(abs(temp_p - p_final))
-            l_delta.append(delta)
-        axis_x = []
-        for i in range(max_iter):
-            axis_x.append(i)
-        plt.plot(axis_x, l_delta)
-        plt.show()
+        if sim:
+            for i in range(max_iter):
+                temp_p = store[i] * sections / v_range
+                delta = sum(abs(temp_p - p_final) * v_range / sections) / self.size
+                l_delta.append(delta)
+            axis_x = []
+            for i in range(max_iter):
+                axis_x.append(i)
+            plt.plot(axis_x, l_delta)
         return p_final
