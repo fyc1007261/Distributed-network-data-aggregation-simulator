@@ -77,7 +77,7 @@ class Network:
         else:
             return True
 
-    def generate(self, area=100, dis=30, new=False, file_name="topology.txt"):
+    def generate(self, area=100, dis=30, new=False, file_name="topology.txt", plot=False):
         # In a square of area*area, if the distance between 2 nodes <= dis, then connect this 2 nodes.
         if new:
             while 1:
@@ -101,11 +101,12 @@ class Network:
                 self.find_neighbors()
                 if self.judge_connected():
                     # plot
-                    for i in range(self.size):
-                        for j in range(self.size):
-                            if self.topology[i][j]==1:
-                                plt.plot([nodes[i][0],nodes[j][0]], [nodes[i][1],nodes[j][1]])
-                    plt.show()
+                    if plot:
+                        for i in range(self.size):
+                            for j in range(self.size):
+                                if self.topology[i][j] == 1:
+                                    plt.plot([nodes[i][0], nodes[j][0]], [nodes[i][1], nodes[j][1]])
+                        plt.show()
                     break
         else:
             # load topology from file.
@@ -154,10 +155,19 @@ class Network:
         return find_extreme(path, "max")
 
     def diameter(self):
+        self.find_neighbors()
         my_list = []
         for i in range(self.size):
             my_list.append(self.diameter_from(i))
         return find_extreme(my_list, "max")
+
+    def average_degree(self):
+        self.find_neighbors()
+        tot = 0
+        for i in range(self.size):
+            tot += len(self.neighbors[i])
+        tot = tot / self.size
+        return tot
 
     def add_line(self, i, j):
         # add a line between node i and node j.
@@ -310,7 +320,7 @@ class Network:
             pdf[min_pos] += 1
         return pdf
 
-    def generic_pdf_consensus(self, sections=10, max_iter=60, sim=False):
+    def generic_pdf_consensus(self, sections=10, max_iter=60, sim=False, label="text"):
         # initialize $\rho$
         rho = []
         global_max = find_extreme(self.value[0].tolist()[0], "max")
@@ -343,5 +353,6 @@ class Network:
             axis_x = []
             for i in range(max_iter):
                 axis_x.append(i)
-            plt.plot(axis_x, l_delta)
+            plt.plot(axis_x, l_delta, label=label)
+            plt.legend()
         return p_final
