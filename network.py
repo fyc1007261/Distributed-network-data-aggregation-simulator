@@ -348,7 +348,8 @@ class Network:
         if sim:
             for i in range(max_iter):
                 temp_p = store[i] * sections / v_range
-                delta = sum(abs(temp_p - p_final) * v_range / sections) / self.size
+                # delta = sum(abs(temp_p - p_final) * v_range / sections) / self.size
+                delta = sum(array(temp_p - p_final)**2) ** 0.5
                 l_delta.append(delta)
             axis_x = []
             for i in range(max_iter):
