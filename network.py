@@ -214,6 +214,30 @@ class Network:
         for i in range(max_iter):
             self.value = self.value * self.weight_matrix
 
+    def variance_consensus(self, max_iter=-1):
+        if max_iter == -1:
+            max_iter = self.size
+        x = copy.deepcopy(self.value)
+        square_x = array(self.value) * array(self.value)
+        to_plot = ([None] * max_iter)[:]
+        for i in range(max_iter):
+            x = x * self.weight_matrix
+            square_x = dot(square_x, self.weight_matrix)
+            temp_variance = square_x - array(x)**2
+            temp_variance = temp_variance.reshape((-1, ))
+            to_plot[i] = array(temp_variance)
+        axis_x = range(max_iter)
+        to_plot = array(to_plot).transpose()
+        to_plot = to_plot - to_plot[-1,-1,-1]
+        for i in range(self.size):
+            print(to_plot[i])
+            plt.plot(axis_x, to_plot[i][0], color="black", linewidth=0.4)
+        plt.title(r"Variance Consensus Algorithm")
+        plt.xlabel(r"iteration number $k$")
+        plt.ylabel(r"$\sigma^2_i(k)-\sigma^2_i(\infty)$")
+        plt.show()
+
+
     def m_consensus(self, flags, iter=0):
         max_values = copy.deepcopy(self.value)
         min_values = copy.deepcopy(self.value)
@@ -336,24 +360,28 @@ class Network:
         rho = mat(rho)
         rho = rho.T
         # Store rho in each iteration
-        store = [rho]
+        store = []
         # Start average consensus
         for i in range(max_iter):
-            rho = rho * self.weight_matrix
-            if sim:
-                store.append(rho)
-        p_final = rho
+            rho = rho * mat(self.weight_matrix)
+            store.append(rho)
+        p_final = copy.deepcopy(rho)
         p_final = p_final * sections / v_range
         l_delta = []
-        if sim:
-            for i in range(max_iter):
-                temp_p = store[i] * sections / v_range
-                # delta = sum(abs(temp_p - p_final) * v_range / sections) / self.size
-                delta = sum(array(temp_p - p_final)**2) ** 0.5
-                l_delta.append(delta)
-            axis_x = []
-            for i in range(max_iter):
-                axis_x.append(i)
-            plt.plot(axis_x, l_delta, label=label)
-            plt.legend()
+        err_all = []
+        # plot
+        for i in range(max_iter):
+            temp_p = store[i] * sections / v_range
+            delta = array(abs(mat(temp_p) - mat(p_final)))
+            delta = sum(delta, axis=0)
+            l_delta.append(delta)
+        axis_x = range(max_iter)
+        l_delta = array(l_delta).transpose()
+        for i in range(self.size):
+            plt.plot(axis_x, l_delta[i], color="black", linewidth=0.3)
+        plt.title("Generic PDF Consensus Algorithm")
+        plt.xlabel(r"iteration number $k$")
+        plt.ylabel(r"$e[i](k)$")
+        plt.show()
         return p_final
+

@@ -45,6 +45,42 @@ def test_diameter():
     b = net.diameter()
     print(b)
 
+def median_consensus():
+    size = 400
+    data = read_data("data400.txt")
+    data = sort(data, 0)
+    med = (data[199] + data[200]) / 2
+    data = data - med
+    axis_x = []
+    axis_y_r = []
+    axis_y_l = []
+    for i in range(int(size / 2)):
+        l = i
+        r = -i-1
+        axis_x.append(i)
+        axis_y_l.append(data[l])
+        axis_y_r.append(data[r])
+    plt.plot(axis_x, axis_y_r, label=r"$x_i^{max}(k)$")
+    plt.plot(axis_x, axis_y_l, label=r"$x_i^{min}(k)$")
+    plt.xlabel(r"iteration number $k$")
+    plt.ylabel(r"$x_i^{max}(k)$ and $x_i^{min}(k)$")
+    plt.legend()
+    plt.show()
 
-size_differs()
-topology_differs()
+def variance_consensus():
+    size = 40
+    data = read_data("data40.txt")
+    net = Network(new_top=True, num=size, s_dis=40)
+    net.set_data(data)
+    net.variance_consensus(max_iter=60)
+
+def generic_pdf():
+    size = 40
+    data = read_data("data40.txt")
+    net = Network(new_top=True, num=size, s_dis=40)
+    net.set_data(data)
+    net.generic_pdf_consensus(sections=20, sim=True, max_iter=60)
+
+A = random.randn(4,3)
+B = sum(A, axis = 1, keepdims = True)
+print(B.shape)
